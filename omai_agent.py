@@ -150,21 +150,48 @@ You are OMAI Agent.
 Mode: {tool_mode}
 Behave like ChatGPT.
 """
-    payload = {
-        "model": model_name,
-        "prompt": system_prompt + "\nUser: " + prompt,
-        "stream": False,
-        "options": {"temperature": 0.5, "num_predict": 1200}
+
+    API_KEY = st.secrets["GROQ_API_KEY"]
+
+    url = "https://api.groq.com/openai/v1/chat/completions"
+
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
     }
-    if image_data:
-        payload["images"] = [image_data]
+
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt
+        },
+        {
+            "role": "user",
+            "content": prompt
+        }
+    ]
+
+    payload = {
+        "model": "llama3-8b-8192",
+        "messages": messages,
+        "temperature": 0.5,
+        "max_tokens": 1200
+    }
 
     try:
-        res = requests.post("http://127.0.0.1:11434/api/generate", json=payload, timeout=120)
-        return res.json().get("response", "No response")
+        res = requests.post(
+            url,
+            headers=headers,
+            json=payload,
+            timeout=120
+        )
+
+        response_json = res.json()
+
+        return response_json["choices"][0]["message"]["content"]
+
     except Exception as e:
         return f"Error: {str(e)}"
-
 # =========================
 # HEADER
 # =========================
